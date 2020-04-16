@@ -23,11 +23,11 @@ if (!require(tictoc)) install.packages("tictoc"); library(tictoc)               
 
 #' A function to find the REC network downstream of a reach
 #'
-#'This function generates a vector of the reach ID numbers (nzsegment attribute) downstream of a reach. It uses the REC V2.4 network. See \href{https://niwa.co.nz/freshwater-and-estuaries/management-tools/river-environment-classification-0}{NIWA REC V2} for details about REC V2.
-#'@param RECNetwork An REC V2 network (either dataframe of spatial dataframe), with at least nzsegment (or nzsgmnt), TO_NODE and FROM_NODE (or FROM_NO) attributes.
-#'@param SourceReach The reach number (i.e. nzsgmnt attribute) of the reach for which the downstream network is required
+#'This function generates a vector of the reach ID numbers (nzsegment, nzsgmnt or nzseg_v3 attribute) downstream of a reach. It uses the REC V2.4, or Environment Southland's REC3 network. See \href{https://niwa.co.nz/freshwater-and-estuaries/management-tools/river-environment-classification-0}{NIWA REC V2} for details about REC V2.
+#'@param RECNetwork An REC V2 network (either dataframe of spatial dataframe), with at least nzsegment (or nzsgmnt or nzseg_v3), TO_NODE and FROM_NODE (or FROM_NO) attributes.
+#'@param SourceReach The reach number, i.e. nzsegment (or nzsgmnt or nzseg_v3) attribute, of the reach for which the downstream network is required
 #'@author Tim Kerr, \email{Tim.Kerr@@Rainfall.NZ}
-#'@return A vector of reach numbers (nzsgmnt attributes)
+#'@return A vector of reach numbers (nzsegment/nzsgmnt/nzseg_v3 attributes)
 #'@keywords REC River Environment Classification
 #'@export
 DownstreamReachFinder <- function(RECNetwork=RECReachNetwork,SourceReach=7239110){ #The reach ID is for the Manawatu at Teachers College water quality reporting site
@@ -35,8 +35,11 @@ DownstreamReachFinder <- function(RECNetwork=RECReachNetwork,SourceReach=7239110
   #Initialise the vector of reach ID's downstream of the source
   DownstreamReaches <- SourceReach
 
-  #If the nzsegment column is called nzsgmnt then rename it
+  #If the nzsegment column is called nzsgmnt then rename it, The NIWA REC2 data has this name.
   names(RECNetwork)[which(names(RECNetwork) == "nzsgmnt")] <- "nzsegment"
+
+  #If the nzsegment column is called nzseg_v3 then rename it, the Environment Southland REC3 has this name.
+  names(RECNetwork)[which(names(RECNetwork) == "nzseg_v3")] <- "nzsegment"
 
   #If the nzsegment column is called FROM_NO then rename it
   names(RECNetwork)[which(names(RECNetwork) == "FROM_NO")] <- "FROM_NODE"
