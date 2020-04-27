@@ -7,15 +7,15 @@
 DownstreamReachFinder(RECNetwork = RECReachNetwork, SourceReach = 7239110)
 }
 \arguments{
-\item{RECNetwork}{An REC V2 network (either dataframe of spatial dataframe), with at least nzsegment (or nzsgmnt), TO_NODE and FROM_NODE (or FROM_NO) attributes.}
+\item{RECNetwork}{An REC V2 network (either dataframe of spatial dataframe), with at least nzsegment (or nzsgmnt or nzseg_v3), TO_NODE and FROM_NODE (or FROM_NO) attributes.}
 
-\item{SourceReach}{The reach number (i.e. nzsgmnt attribute) of the reach for which the downstream network is required}
+\item{SourceReach}{The reach number, i.e. nzsegment (or nzsgmnt or nzseg_v3) attribute, of the reach for which the downstream network is required}
 }
 \value{
-A vector of reach numbers (nzsgmnt attributes)
+A vector of reach numbers (nzsegment/nzsgmnt/nzseg_v3 attributes)
 }
 \description{
-This function generates a vector of the reach ID numbers (nzsegment attribute) downstream of a reach. It uses the REC V2.4 network. See \href{https://niwa.co.nz/freshwater-and-estuaries/management-tools/river-environment-classification-0}{NIWA REC V2} for details about REC V2.
+This function generates a vector of the reach ID numbers (nzsegment, nzsgmnt or nzseg_v3 attribute) downstream of a reach. It uses the REC V2.4, or Environment Southland's REC3 network. See \href{https://niwa.co.nz/freshwater-and-estuaries/management-tools/river-environment-classification-0}{NIWA REC V2} for details about REC V2.
 }
 \author{
 Tim Kerr, \email{Tim.Kerr@Rainfall.NZ}
