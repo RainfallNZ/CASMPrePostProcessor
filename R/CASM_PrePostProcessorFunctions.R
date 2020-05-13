@@ -452,7 +452,7 @@ DiffuseLoadTableCreator <- function(ZoneLanduseLUCRaster=ZoneLanduseLUCRaster,
   #Get the mean leach rate for each combined-class level
   #I don't need to get area weighted mean because all cells are the same size
   ClassSummaries <- ddply(RasterData,.(CombinedClassNameLevel), function(x) c(LeachRate =round(mean(x$LeachRates),1), count =  length(x$LeachRates), Hectares = length(x$LeachRates) * CellAreaHectares))
-
+  Test <- 5
   browser()
   ClassSummaries$CombinedClassName <- levels(ZoneLanduseLUCRaster)[[1]][ClassSummaries$CombinedClassNameLevel,2]
   return(ClassSummaries)
