@@ -41,7 +41,7 @@ DownstreamReachFinder <- function(RECNetwork=RECReachNetwork,SourceReach=7239110
   #If the nzsegment column is called nzseg_v3 then rename it, the Environment Southland REC3 has this name.
   names(RECNetwork)[which(names(RECNetwork) == "nzseg_v3")] <- "nzsegment"
 
-  #If the nzsegment column is called FROM_NO then rename it
+  #If the FROM_NODE column is called FROM_NO then rename it
   names(RECNetwork)[which(names(RECNetwork) == "FROM_NO")] <- "FROM_NODE"
 
   #Identify the row index of the source reach
@@ -192,23 +192,30 @@ TributaryConnectionCreator <- function(RECNetwork = CompleteSpatialNetwork, Trib
 #'
 #'This function generates a data frame of CASM Node names, CASM tributary, CASM tributary location
 #'
-#'@param CASMRECNetwork An REC V2 network (either dataframe of spatial dataframe), with at least nzsgmnt, CASMTrib and CASMTrib_Loc attributes
-#'@param CASMNodes A dataframe of node names and REC V2 reach number (i.e. nzsgmnt attribute) of the nodes for which the CASM table is to be prepared
+#'@param CASMRECNetwork An REC V2 network (either dataframe of spatial dataframe), with at least nzsegment, CASMTrib and CASMTrib_Loc attributes
+#'@param CASMNodes A dataframe of node names and REC V2 reach number (i.e. nzsegment attribute) of the nodes for which the CASM table is to be prepared
 #'@author Tim Kerr, \email{Tim.Kerr@@Rainfall.NZ}
 #'@return A dataframe of CASM Node names, CASM tributary, CASM tributary location
 #'@keywords REC River Environment Classification CASM
 #'@export
-CASMNodeTablePreparer <- function(CASMRECNetwork=RECReachNetwork, NetworkLabelList = NetworkLabelList, TributaryConnectionTable = TributaryConnectionTable, CASMNodes=data.frame(NodeName = c("test","Manawatu at Teachers College"),nzsgmnt= c(7140020,7239110))){
+CASMNodeTablePreparer <- function(CASMRECNetwork=RECReachNetwork, NetworkLabelList = NetworkLabelList, TributaryConnectionTable = TributaryConnectionTable, CASMNodes=data.frame(NodeName = c("test","Manawatu at Teachers College"),nzsegment= c(7140020,7239110))){
+
+  #Make sure the nzsegment attribute is correctly named. This is needed because the RECV2 version available from NIWA has altered attribute names (to meet ESRI column naming limitations)
+  #If the nzsegment column is called nzsgmnt then rename it, The NIWA REC2 data has this name.
+  names(CASMRECNetwork)[which(names(CASMRECNetwork) == "nzsgmnt")] <- "nzsegment"
+  names(NetworkLabelList)[which(names(NetworkLabelList) == "nzsgmnt")] <- "nzsegment"
+  names(CASMNodes)[which(names(CASMNodes) == "nzsgmnt")] <- "nzsegment"
+  names(TributaryConnectionTable)[which(names(TributaryConnectionTable) == "nzsgmnt")] <- "nzsegment"
 
   #Work through each catchment
   AllTribLocations <- lapply(NetworkLabelList, function(SingleCatchmentNeworkLabels) {
 
     #Get the catchment name
-    CatchmentName <- OutletReachNames$Name[OutletReachNames$nzsegment %in% SingleCatchmentNeworkLabels$nzsgmnt]
+    CatchmentName <- OutletReachNames$Name[OutletReachNames$nzsegment %in% SingleCatchmentNeworkLabels$nzsegment]
     print(CatchmentName)
 
     #Find which CASMNodes are within the current catchment
-    CatchmentNodes <- CASMNodes[(CASMNodes$nzsgmnt %in% SingleCatchmentNeworkLabels$nzsgmnt),]
+    CatchmentNodes <- CASMNodes[(CASMNodes$nzsegment %in% SingleCatchmentNeworkLabels$nzsegment),]
 
     #Work through all the Nodes that are in this catchment
     if (nrow(CatchmentNodes) > 0) {
@@ -216,15 +223,15 @@ CASMNodeTablePreparer <- function(CASMRECNetwork=RECReachNetwork, NetworkLabelLi
       TribLocations <- sapply(seq_along(CatchmentNodes$NodeName), function(NodeIndex){
 
         CASMNode <- CatchmentNodes[NodeIndex,]
-        NodeNumber  <- SingleCatchmentNeworkLabels$Label[SingleCatchmentNeworkLabels$nzsgmnt == CASMNode$nzsgmnt]
+        NodeNumber  <- SingleCatchmentNeworkLabels$Label[SingleCatchmentNeworkLabels$nzsegment == CASMNode$nzsegment]
         NodeTribName <- paste0(CatchmentName,"-",NodeNumber)
 
-        #Look up the trib ID (prepended with the catchment name) of the reach of the current node and find the reach number (nzsgmnt attribute) of its confluence
-        TribOutletReach <- TributaryConnectionTable$nzsgmnt[which(TributaryConnectionTable$`Tributary Name` == NodeTribName)]
+        #Look up the trib ID (prepended with the catchment name) of the reach of the current node and find the reach number (nzsegment attribute) of its confluence
+        TribOutletReach <- TributaryConnectionTable$nzsegment[which(TributaryConnectionTable$`Tributary Name` == NodeTribName)]
 
         #Subtract the LENGTHD of the current reach from the LENGTHD of its tributary outlet reach
-        LocationOnTrib <- CASMRECNetwork$LENGTHD[CASMRECNetwork$nzsgmnt == CASMNode$nzsgmnt] - CASMRECNetwork$LENGTHD[CASMRECNetwork$nzsgmnt == TribOutletReach]
-        Result <- c(nzsgmnt=CASMNode$nzsgmnt,CASMNodeName=as.character(CASMNode$NodeName),TribName = NodeTribName,TribLocn = round(LocationOnTrib/1000,0))
+        LocationOnTrib <- CASMRECNetwork$LENGTHD[CASMRECNetwork$nzsegment == CASMNode$nzsegment] - CASMRECNetwork$LENGTHD[CASMRECNetwork$nzsegment == TribOutletReach]
+        Result <- c(nzsegment=CASMNode$nzsegment,CASMNodeName=as.character(CASMNode$NodeName),TribName = NodeTribName,TribLocn = round(LocationOnTrib/1000,0))
         return(Result)
       })
     } else {NULL}
@@ -235,7 +242,7 @@ CASMNodeTablePreparer <- function(CASMRECNetwork=RECReachNetwork, NetworkLabelLi
   #Turn the catchment-based list into a data frame
   CASMNodeTable <- data.frame(t(do.call(cbind,AllTribLocations)))
   #Convert the numbers into numbers
-  CASMNodeTable$nzsgmnt <- as.numeric(levels(CASMNodeTable$nzsgmnt))[CASMNodeTable$nzsgmnt]
+  CASMNodeTable$nzsegment <- as.numeric(levels(CASMNodeTable$nzsegment))[CASMNodeTable$nzsegment]
   CASMNodeTable$TribLocn <- as.numeric(levels(CASMNodeTable$TribLocn))[CASMNodeTable$TribLocn]
   return(CASMNodeTable)
 }
@@ -444,13 +451,15 @@ DiffuseLoadTableCreator <- function(ZoneLanduseLUCRaster=ZoneLanduseLUCRaster,
 
   #Now I can get all the leach rate values for all grid cells, and all the combined class names for all the cells
   RasterData <- data.frame(LeachRates = values(LeachRates), CombinedClassNameLevel = values(ZoneLanduseLUCRaster))
-  RasterData <- RasterData[complete.cases(RasterData),]
+  RasterData <- RasterData[complete.cases(RasterData$CombinedClassNameLevel),]
+  RasterData$LeachRates[is.na(RasterData$LeachRates)] <- min(RasterData$LeachRates,na.rm = TRUE)
 
   #I can then count the number of cells in each combined-class, and figure out the total area
   CellAreaHectares <- prod(res(LeachRates)) / 10000
 
   #Get the mean leach rate for each combined-class level
   #I don't need to get area weighted mean because all cells are the same size
+
   ClassSummaries <- ddply(RasterData,.(CombinedClassNameLevel), function(x) c(LeachRate =round(mean(x$LeachRates),1), count =  length(x$LeachRates), Hectares = length(x$LeachRates) * CellAreaHectares))
 
   ClassSummaries$CombinedClassName <- ZoneLanduseLUCRaster@data@attributes[[1]][ClassSummaries$CombinedClassNameLevel,2]
