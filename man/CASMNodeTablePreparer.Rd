@@ -8,14 +8,14 @@ CASMNodeTablePreparer(
   CASMRECNetwork = RECReachNetwork,
   NetworkLabelList = NetworkLabelList,
   TributaryConnectionTable = TributaryConnectionTable,
-  CASMNodes = data.frame(NodeName = c("test", "Manawatu at Teachers College"), nzsgmnt
-    = c(7140020, 7239110))
+  CASMNodes = data.frame(NodeName = c("test", "Manawatu at Teachers College"),
+    nzsegment = c(7140020, 7239110))
 )
 }
 \arguments{
-\item{CASMRECNetwork}{An REC V2 network (either dataframe of spatial dataframe), with at least nzsgmnt, CASMTrib and CASMTrib_Loc attributes}
+\item{CASMRECNetwork}{An REC V2 network (either dataframe of spatial dataframe), with at least nzsegment, CASMTrib and CASMTrib_Loc attributes}
 
-\item{CASMNodes}{A dataframe of node names and REC V2 reach number (i.e. nzsgmnt attribute) of the nodes for which the CASM table is to be prepared}
+\item{CASMNodes}{A dataframe of node names and REC V2 reach number (i.e. nzsegment attribute) of the nodes for which the CASM table is to be prepared}
 }
 \value{
 A dataframe of CASM Node names, CASM tributary, CASM tributary location
