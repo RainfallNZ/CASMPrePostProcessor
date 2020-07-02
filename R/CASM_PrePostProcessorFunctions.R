@@ -199,11 +199,10 @@ TributaryConnectionCreator <- function(RECNetwork = CompleteSpatialNetwork, Trib
 #'@keywords REC River Environment Classification CASM
 #'@export
 CASMNodeTablePreparer <- function(CASMRECNetwork=RECReachNetwork, NetworkLabelList = NetworkLabelList, TributaryConnectionTable = TributaryConnectionTable, CASMNodes=data.frame(NodeName = c("test","Manawatu at Teachers College"),nzsegment= c(7140020,7239110))){
-
   #Make sure the nzsegment attribute is correctly named. This is needed because the RECV2 version available from NIWA has altered attribute names (to meet ESRI column naming limitations)
   #If the nzsegment column is called nzsgmnt then rename it, The NIWA REC2 data has this name.
   names(CASMRECNetwork)[which(names(CASMRECNetwork) == "nzsgmnt")] <- "nzsegment"
-  names(NetworkLabelList)[which(names(NetworkLabelList) == "nzsgmnt")] <- "nzsegment"
+  NetworkLabelList <- lapply(NetworkLabelList, function(x) {names(x)[1] = "nzsegment"; return(x)})
   names(CASMNodes)[which(names(CASMNodes) == "nzsgmnt")] <- "nzsegment"
   names(TributaryConnectionTable)[which(names(TributaryConnectionTable) == "nzsgmnt")] <- "nzsegment"
 
