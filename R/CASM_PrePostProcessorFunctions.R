@@ -208,9 +208,11 @@ CASMNodeTablePreparer <- function(CASMRECNetwork=RECReachNetwork, NetworkLabelLi
 
   #Work through each catchment
   AllTribLocations <- lapply(NetworkLabelList, function(SingleCatchmentNeworkLabels) {
-
+    #browser()
     #Get the catchment name
+    #if(exists("OutletReachNames")) {
     CatchmentName <- OutletReachNames$Name[OutletReachNames$nzsegment %in% SingleCatchmentNeworkLabels$nzsegment]
+    #} else { CatchmentName = "NoName"}
     print(CatchmentName)
 
     #Find which CASMNodes are within the current catchment
@@ -241,8 +243,8 @@ CASMNodeTablePreparer <- function(CASMRECNetwork=RECReachNetwork, NetworkLabelLi
   #Turn the catchment-based list into a data frame
   CASMNodeTable <- data.frame(t(do.call(cbind,AllTribLocations)))
   #Convert the numbers into numbers
-  CASMNodeTable$nzsegment <- as.numeric(levels(CASMNodeTable$nzsegment))[CASMNodeTable$nzsegment]
-  CASMNodeTable$TribLocn <- as.numeric(levels(CASMNodeTable$TribLocn))[CASMNodeTable$TribLocn]
+  CASMNodeTable$nzsegment <- as.numeric(CASMNodeTable$nzsegment)
+  CASMNodeTable$TribLocn <- as.numeric(CASMNodeTable$TribLocn)
   return(CASMNodeTable)
 }
 
@@ -287,13 +289,14 @@ ReachLabeler <- function(NetworkLabels=NetworkLabelList,OutletReachNamesLookUpTa
 #'@return A raster object of leach rates
 #'@keywords REC River Environment Classification CASM
 #'@export
-LeachRateRasterCreator <- function(ClimateData=file.path(GISDataDirectory,ClimateShapeFileName),
-                                   LanduseData=file.path(GISDataDirectory,SubZoneLanduseLUCShapeFileName),
-                                   IrrigatedLandData=file.path(GISDataDirectory,IrrigatedLandShapeFileName),
-                                   IrrigableLandData=file.path(GISDataDirectory,IrrigableLandShapeFileName),
-                                   PAWData=file.path(GISDataDirectory,PAWShapeFileName),
-                                   MPILeachRateData = file.path(DataDirectory,MPILeachRateLUTFile),
-                                   LanduseToLanduseLUT = file.path(DataDirectory,LanduseToLanduseLUTFile)){
+LeachRateRasterCreator <- function(ClimateData=ClimateShapeFileName,
+                                   LanduseData=SubZoneLanduseLUCShapeFileName,
+                                   IrrigatedLandData=IrrigatedLandShapeFileName,
+                                   IrrigableLandData=IrrigableLandShapeFileName,
+                                   PAWData=PAWShapeFileName,
+                                   MPILeachRateData = MPILeachRateLUTFile,
+                                   LanduseToLanduseLUT = LanduseToLanduseLUTFile){
+  #browser()
   #Load the lookup table that converts Horizon's Landuse names to the Landuse codes used by the MPI leaching-rate lookup table.
   LanduseToLanduseLookUpTable <- read.csv(LanduseToLanduseLUT)
 
@@ -306,7 +309,7 @@ LeachRateRasterCreator <- function(ClimateData=file.path(GISDataDirectory,Climat
   MPILeachRateLookUpTable$CombinedCriteria <- do.call(paste,MPILeachRateLookUpTable[1:5])
 
   #Load climate spatial data
-  ClimateSpatial <- readOGR(ClimateData, stringsAsFactors = FALSE)
+  ClimateSpatial <- readOGR(dsn=dirname(ClimateData),layer=basename(ClimateData), stringsAsFactors = FALSE)
   #Make sure the class id is numeric
   ClimateSpatial@data$id <- as.numeric(ClimateSpatial@data$id)
   #Convert to raster, note the creation of a base raster, which all subsequent raster's align to
@@ -314,7 +317,7 @@ LeachRateRasterCreator <- function(ClimateData=file.path(GISDataDirectory,Climat
   ClimateRaster <- rasterize(ClimateSpatial,RasterBase,"id")
 
   #Load the spatial data with the landuse, land use capability and submanagement zones alltogether
-  SubZoneLanduseLUCSpatial <- readOGR(LanduseData,stringsAsFactors = FALSE)
+  SubZoneLanduseLUCSpatial <- readOGR(dsn=dirname(LanduseData),layer=basename(LanduseData),stringsAsFactors = FALSE)
   SubZoneLanduseLUCSpatial <- spTransform(SubZoneLanduseLUCSpatial,CRS("+init=epsg:2193") )
 
   #Determine the landuse code number needed to calculate MPI leaching rates
@@ -324,17 +327,17 @@ LeachRateRasterCreator <- function(ClimateData=file.path(GISDataDirectory,Climat
   LanduseRaster <- rasterize(SubZoneLanduseLUCSpatial,RasterBase,"MPILanduseCode")
 
   #Load Irrigable land spatial data
-  IrrigableLandSpatial <- readOGR(IrrigableLandData,stringsAsFactors = FALSE)
+  IrrigableLandSpatial <- readOGR(dsn=dirname(IrrigableLandData),layer=basename(IrrigableLandData),stringsAsFactors = FALSE)
   IrrigableLandSpatial@data$Irrigable <- as.numeric(IrrigableLandSpatial@data$Irrigable)
   IrrigableRaster <- rasterize(IrrigableLandSpatial, RasterBase, rep(1,length(IrrigableLandSpatial)),background = 0)
 
   #Load irrigated land spatial data
-  IrrigatedLandSpatial <- readOGR(IrrigatedLandData,stringsAsFactors = FALSE)
+  IrrigatedLandSpatial <- readOGR(dsn=dirname(IrrigatedLandData),layer=basename(IrrigatedLandData),stringsAsFactors = FALSE)
   IrrigatedLandSpatial@data$Irrigated <- as.numeric(IrrigatedLandSpatial@data$Irrigated)
   IrrigatedRaster <- rasterize(IrrigatedLandSpatial, RasterBase, rep(1,length(IrrigatedLandSpatial)),background = 0)
 
   #Load Plant Available Water (PAW) spatial data
-  PAWSpatial <- readOGR(PAWData, stringsAsFactors = FALSE)
+  PAWSpatial <- readOGR(dsn=dirname(PAWData),layer=basename(PAWData), stringsAsFactors = FALSE)
   #Convert PAW values to numbers (I don't know why they are characters)
   PAWSpatial$PAW_Cat2 <- as.numeric(PAWSpatial$PAW_Cat2)
   PAWRaster <- rasterize(PAWSpatial,RasterBase,"PAW_Cat2")
@@ -346,7 +349,7 @@ LeachRateRasterCreator <- function(ClimateData=file.path(GISDataDirectory,Climat
   TotalRaster <- rasterize(x=SubZoneLanduseLUCSpatial,y=TotalRaster,mask=TRUE)
 
   #Save a copy for later
-  writeRaster(TotalRaster,file.path(GISDataDirectory,PredictorRasterFileName),overwrite=TRUE)
+  #writeRaster(TotalRaster,file.path(GISDataDirectory,PredictorRasterFileName),overwrite=TRUE)
 
 
   # #Ton asked me to find which Horizon's predictor combinations didn't exist in the MPI look up table.
@@ -407,12 +410,13 @@ ZoneLanduseLUCRasterCreator <- function(ZoneLanduseLUCPolygons=SubZoneLanduseLUC
   ZoneLanduseLUCPolygons$CombinedClassNameFactor <- as.factor(ZoneLanduseLUCPolygons$CombinedClassName)
   #Create the raster, and allign to the Leach rate raster
   ZoneLanduseLUCRaster <- rasterize(ZoneLanduseLUCPolygons,LeachRates,"CombinedClassNameFactor")
-  levels(ZoneLanduseLUCRaster) <- data.frame(ID=seq(1:3887),CombinedClassName=levels(ZoneLanduseLUCPolygons$CombinedClassNameFactor))
+  NoOfLevels <- length(levels(ZoneLanduseLUCPolygons$CombinedClassNameFactor))
+  levels(ZoneLanduseLUCRaster) <- data.frame(ID=seq(1:NoOfLevels),CombinedClassName=levels(ZoneLanduseLUCPolygons$CombinedClassNameFactor))
   #Save a copy for later
-  writeRaster(ZoneLanduseLUCRaster,file.path(GISDataDirectory,ZoneLanduseLUCRasterFileName),overwrite=TRUE)
+  #writeRaster(ZoneLanduseLUCRaster,file.path(GISDataDirectory,ZoneLanduseLUCRasterFileName),overwrite=TRUE)
   #browser()
   #And save a levels-to-class name look up table
-  write.table(levels(ZoneLanduseLUCRaster),file.path(DataDirectory,ZoneLanduseLUCCode_To_ClassLUTFileName),sep=",",quote=FALSE, row.names=FALSE)
+  #write.table(levels(ZoneLanduseLUCRaster),file.path(DataDirectory,ZoneLanduseLUCCode_To_ClassLUTFileName),sep=",",quote=FALSE, row.names=FALSE)
 
 
   return(ZoneLanduseLUCRaster)
